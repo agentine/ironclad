@@ -1,6 +1,26 @@
 # ironclad
 
+[![npm](https://img.shields.io/npm/v/@agentine/ironclad)](https://www.npmjs.com/package/@agentine/ironclad)
+[![Node](https://img.shields.io/node/v/@agentine/ironclad)](https://www.npmjs.com/package/@agentine/ironclad)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.x-blue)](https://www.typescriptlang.org/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
 Modern isomorphic TypeScript crypto library replacing crypto-js. Wraps Web Crypto API and Node.js crypto for security and performance — zero custom crypto implementations.
+
+## Why ironclad?
+
+[crypto-js](https://github.com/brix/crypto-js) was the de facto browser crypto library, but it implements cryptographic algorithms in pure JavaScript — a significant security risk compared to platform-native implementations. It is also effectively unmaintained, with no releases since 2023.
+
+ironclad is a clean replacement:
+
+| | crypto-js | ironclad |
+|---|---|---|
+| Implementation | Pure JavaScript | **Platform crypto (Web Crypto API)** |
+| Async API | No (sync) | **Yes (Promise-based)** |
+| TypeScript | No (types via `@types`) | **First-class TypeScript** |
+| Isomorphic | Partial | **Node.js, Browser, Deno, Bun, Workers** |
+| Security | Pure-JS (not constant-time) | **FIPS-validated, constant-time, hardware-accelerated** |
+| Maintained | No (abandoned 2023) | **Yes** |
 
 ## Install
 
@@ -95,6 +115,26 @@ randomBytes(length: number): Uint8Array
 randomHex(length: number): string
 randomBase64(length: number): string
 ```
+
+### Platform Detection
+
+```typescript
+isNode(): boolean             // true in Node.js
+isBrowser(): boolean          // true in browser environments
+isDeno(): boolean             // true in Deno
+isBun(): boolean              // true in Bun
+isCloudflareWorker(): boolean // true in Cloudflare Workers
+```
+
+### WordArray (crypto-js compatibility)
+
+```typescript
+bytesToWords(bytes: Uint8Array): WordArray
+wordsToBytes(words: number[], sigBytes: number): Uint8Array
+wordArrayToString(wa: WordArray): string  // hex string
+```
+
+These helpers allow interop with crypto-js `WordArray` objects during migration.
 
 ## Migrating from crypto-js
 
