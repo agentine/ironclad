@@ -5,6 +5,9 @@ import { toBase64, fromBase64 } from "./encoding/base64.js";
 
 const encoder = new TextEncoder();
 
+let _cbcWarned = false;
+let _ctrWarned = false;
+
 function toBytes(input: string | Uint8Array): Uint8Array {
   return typeof input === "string" ? encoder.encode(input) : input;
 }
@@ -74,6 +77,14 @@ export async function encrypt(
   options?: AesOptions,
 ): Promise<EncryptedData> {
   const mode: AesMode = options?.mode ?? "GCM";
+  if (mode === "CBC" && !_cbcWarned) {
+    console.warn("[ironclad] AES-CBC does not provide integrity protection. Use AES-GCM (default) for authenticated encryption.");
+    _cbcWarned = true;
+  }
+  if (mode === "CTR" && !_ctrWarned) {
+    console.warn("[ironclad] AES-CTR does not provide integrity protection. Use AES-GCM (default) for authenticated encryption.");
+    _ctrWarned = true;
+  }
   const keySize = options?.keySize ?? 256;
   const subtle = getSubtle();
 
@@ -186,6 +197,10 @@ export function deserialize(str: string): EncryptedData {
   const parts = str.split(":");
   if (parts.length < 3 || parts.length > 4) {
     throw new Error("Invalid encrypted data string");
+  }
+  const validModes: AesMode[] = ["GCM", "CBC", "CTR"];
+  if (!validModes.includes(parts[0] as AesMode)) {
+    throw new Error("Invalid AES mode: " + parts[0]);
   }
   const mode = parts[0] as AesMode;
   const iv = fromBase64(parts[1]!);

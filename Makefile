@@ -11,6 +11,7 @@ test:
 
 lint:
 	npx tsc --noEmit
+	npm run lint
 
 fmt:
 	npx prettier --write src/ tests/

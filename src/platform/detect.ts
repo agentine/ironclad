@@ -1,4 +1,3 @@
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const g = globalThis as any;
 
 // Cache crypto references for performance
@@ -18,7 +17,6 @@ function loadCrypto(): void {
     }
     // Node.js 18 fallback: crypto.webcrypto
     if (isNode()) {
-      // eslint-disable-next-line @typescript-eslint/no-require-imports
       const nodeCrypto = g.require ? g.require("node:crypto") : require("node:crypto");
       if (nodeCrypto.webcrypto?.subtle) {
         _subtle = nodeCrypto.webcrypto.subtle;

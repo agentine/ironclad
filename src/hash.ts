@@ -53,7 +53,12 @@ export async function sha1(input: string | Uint8Array): Promise<string> {
  * Legacy — MD5 is cryptographically broken. Use SHA-256+ for security.
  * Uses Node.js crypto on Node, pure-JS fallback on browser.
  */
+let _md5Warned = false;
 export async function md5(input: string | Uint8Array): Promise<string> {
+  if (!_md5Warned) {
+    console.warn("[ironclad] MD5 is cryptographically broken. Use sha256() for security.");
+    _md5Warned = true;
+  }
   const data = toBytes(input);
   if (isNode()) {
     const { md5Node } = await import("./platform/node.js");

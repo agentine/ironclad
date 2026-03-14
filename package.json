@@ -29,9 +29,11 @@
     "build:esm": "tsc -p tsconfig.json",
     "build:cjs": "tsc -p tsconfig.cjs.json",
     "clean": "rm -rf dist",
+    "lint": "biome check src/ test/",
     "test": "vitest run"
   },
   "devDependencies": {
+    "@biomejs/biome": "^2.4.7",
     "@types/node": "^25.5.0",
     "typescript": "^5.4.0",
     "vitest": "^3.0.0"

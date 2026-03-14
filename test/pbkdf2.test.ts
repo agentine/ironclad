@@ -50,4 +50,22 @@ describe("hkdf", () => {
     const key2 = await expand(ikm, 32, info2);
     expect(toHex(key1)).not.toBe(toHex(key2));
   });
+
+  it("RFC 5869 Test Case 1 (SHA-256)", async () => {
+    const ikm = new Uint8Array(22).fill(0x0b);
+    const salt = new Uint8Array([0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,0x0a,0x0b,0x0c]);
+    const info = new Uint8Array([0xf0,0xf1,0xf2,0xf3,0xf4,0xf5,0xf6,0xf7,0xf8,0xf9]);
+    const result = await expand(ikm, 42, info, salt, "SHA-256");
+    expect(toHex(result)).toBe(
+      "3cb25f25faacd57a90434f64d0362f2a2d2d0a90cf1a5a4c5db02d56ecc4c5bf34007208d5b887185865",
+    );
+  });
+
+  it("RFC 5869 Test Case 3 (SHA-256, zero-length salt/info)", async () => {
+    const ikm = new Uint8Array(22).fill(0x0b);
+    const result = await expand(ikm, 42, new Uint8Array(0), new Uint8Array(0), "SHA-256");
+    expect(toHex(result)).toBe(
+      "8da4e775a563c18f715f802a063c5a31b8a11f5c5ee1879ec3454e5f3c738d2d9d201395faa4b61a96c8",
+    );
+  });
 });
