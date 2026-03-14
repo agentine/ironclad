@@ -1,6 +1,35 @@
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const g = globalThis as any;
 
+// Cache crypto references for performance
+let _subtle: SubtleCrypto | undefined;
+let _crypto: Crypto | undefined;
+let _loaded = false;
+
+function loadCrypto(): void {
+  if (_loaded) return;
+  _loaded = true;
+  try {
+    // Most environments: globalThis.crypto.subtle (Node 19+, browsers, Deno, Bun, Workers)
+    if (typeof g.crypto?.subtle !== "undefined") {
+      _subtle = g.crypto.subtle;
+      _crypto = g.crypto;
+      return;
+    }
+    // Node.js 18 fallback: crypto.webcrypto
+    if (isNode()) {
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const nodeCrypto = g.require ? g.require("node:crypto") : require("node:crypto");
+      if (nodeCrypto.webcrypto?.subtle) {
+        _subtle = nodeCrypto.webcrypto.subtle;
+        _crypto = nodeCrypto.webcrypto;
+      }
+    }
+  } catch {
+    // crypto not available in this environment
+  }
+}
+
 /** Check if running in Node.js */
 export function isNode(): boolean {
   return (
@@ -38,16 +67,16 @@ export function isCloudflareWorker(): boolean {
 
 /** Get the Web Crypto API subtle object, available in all modern runtimes */
 export function getSubtle(): SubtleCrypto {
-  if (typeof globalThis.crypto?.subtle !== "undefined") {
-    return globalThis.crypto.subtle;
-  }
+  loadCrypto();
+  if (_subtle) return _subtle;
   throw new Error("Web Crypto API (crypto.subtle) is not available in this environment");
 }
 
 /** Get the crypto.getRandomValues function */
 export function getRandomValues(array: Uint8Array): Uint8Array {
-  if (typeof globalThis.crypto?.getRandomValues !== "undefined") {
-    return globalThis.crypto.getRandomValues(array);
+  loadCrypto();
+  if (_crypto?.getRandomValues) {
+    return _crypto.getRandomValues(array);
   }
   throw new Error("crypto.getRandomValues is not available in this environment");
 }
