@@ -4,6 +4,18 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Added
+
+- Browser test suite covering platform detection and Web Crypto API operations (#529)
+- RFC 5869 HKDF test vectors (#529)
+- Biome linter with lint step in CI workflow (#530)
+
+### Fixed
+
+- `md5()`: emits a one-time `DeprecationWarning` to discourage use in new code (#528)
+- `deserialize()`: validates the `mode` field before attempting AES decryption (#526)
+- `encrypt()`: warns when CBC or CTR mode is used (unauthenticated — prefer GCM) (#527)
+
 ## [0.1.0] — 2026-03-14
 
 ### Added
