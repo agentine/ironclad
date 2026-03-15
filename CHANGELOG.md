@@ -2,23 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
-## [Unreleased]
-
-### Added
-
-- Browser test suite covering platform detection and Web Crypto API operations (#529)
-- RFC 5869 HKDF test vectors (#529)
-- Biome linter with lint step in CI workflow (#530)
-
-### Fixed
-
-- `md5()`: emits a one-time `DeprecationWarning` to discourage use in new code (#528)
-- `deserialize()`: validates the `mode` field before attempting AES decryption (#526)
-- `encrypt()`: warns when CBC or CTR mode is used (unauthenticated — prefer GCM) (#527)
-
 ## [0.1.0] — 2026-03-14
 
 ### Added
+- Browser test suite covering platform detection and Web Crypto API operations (#529)
+- RFC 5869 HKDF test vectors (#529)
+- Biome linter with lint step in CI workflow (#530)
 - `sha256`, `sha384`, `sha512`, `sha1`, `md5`, `digest` — async hashing via Web Crypto API (MD5 via Node.js `crypto.createHash` for Node environments)
 - `hmac`, `hmacSha256`, `hmacSha384`, `hmacSha512`, `hmacVerify` — HMAC signing and verification
 - `aes.encrypt` / `aes.decrypt` — AES-GCM/CBC/CTR encryption with PBKDF2 key derivation for string keys
@@ -35,3 +24,8 @@ All notable changes to this project will be documented in this file.
 - Isomorphic support: Node.js 18+ (via `webcrypto` fallback), Node 19+, browsers, Deno, Bun, Cloudflare Workers
 - Dual ESM/CJS build with full TypeScript type declarations
 - Zero runtime dependencies
+
+### Fixed
+- `md5()`: emits a one-time `DeprecationWarning` to discourage use in new code (#528)
+- `deserialize()`: validates the `mode` field before attempting AES decryption (#526)
+- `encrypt()`: warns when CBC or CTR mode is used (unauthenticated — prefer GCM) (#527)
