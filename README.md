@@ -1,6 +1,7 @@
 # ironclad
 
 [![npm](https://img.shields.io/npm/v/@agentine/ironclad)](https://www.npmjs.com/package/@agentine/ironclad)
+[![CI](https://github.com/agentine/ironclad/actions/workflows/publish.yml/badge.svg)](https://github.com/agentine/ironclad/actions/workflows/publish.yml)
 [![Node](https://img.shields.io/node/v/@agentine/ironclad)](https://www.npmjs.com/package/@agentine/ironclad)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.x-blue)](https://www.typescriptlang.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
@@ -53,10 +54,12 @@ const valid = await password.verify('user-password', hashed);
 sha256(input: string | Uint8Array): Promise<string>  // hex output
 sha384(input: string | Uint8Array): Promise<string>
 sha512(input: string | Uint8Array): Promise<string>
-sha1(input: string | Uint8Array): Promise<string>    // legacy
-md5(input: string | Uint8Array): Promise<string>      // legacy
+sha1(input: string | Uint8Array): Promise<string>    // legacy — prefer SHA-256+
+md5(input: string | Uint8Array): Promise<string>     // deprecated — see below
 digest(algorithm: HashAlgorithm, input): Promise<string>
 ```
+
+> **MD5 deprecation:** `md5()` is provided only for interoperability with legacy systems. MD5 is cryptographically broken — it is vulnerable to collision attacks and must not be used for security purposes (passwords, signatures, integrity checks). Calling `md5()` emits a one-time `console.warn` at runtime. Use `sha256()` or stronger for all new code.
 
 ### HMAC
 
@@ -77,9 +80,31 @@ aes.serialize(data: EncryptedData): string
 aes.deserialize(str: string): EncryptedData
 ```
 
-Default: AES-256-GCM with random IV. String keys auto-derive via PBKDF2.
+Default: AES-256-GCM with random IV. String keys are automatically derived via PBKDF2 (600K iterations).
 
 Options: `{ mode?: 'GCM' | 'CBC' | 'CTR', keySize?: 128 | 192 | 256 }`
+
+**Mode security notes:**
+
+| Mode | Authentication | Recommendation |
+|------|---------------|----------------|
+| **GCM** (default) | ✅ Authenticated (AEAD) | Use for all new code |
+| **CBC** | ❌ None | Legacy interop only — see warning below |
+| **CTR** | ❌ None | Legacy interop only — see warning below |
+
+> **AES-CBC warning:** CBC mode provides confidentiality but no integrity protection. Ciphertext can be tampered with without detection. It is vulnerable to padding oracle attacks if error messages leak decryption state. Only use CBC for legacy system compatibility; prefer GCM for all new code. Ironclad emits a `console.warn` the first time CBC is used.
+
+> **AES-CTR warning:** CTR mode is a stream cipher that provides no authentication. Without a MAC, an attacker can flip bits in the ciphertext to predictably modify the plaintext (bit-flip attack). Only use CTR for legacy system compatibility; prefer GCM for all new code. Ironclad emits a `console.warn` the first time CTR is used.
+
+Serialization example:
+
+```typescript
+// Serialize to a portable string for storage/transport
+const encrypted = await aes.encrypt('secret', 'password');
+const str = aes.serialize(encrypted);   // "GCM:base64iv:base64ct:base64tag"
+const back = aes.deserialize(str);
+const decrypted = await aes.decrypt(back, 'password');
+```
 
 ### Key Derivation
 
@@ -157,6 +182,38 @@ Key differences:
 - **Secure defaults** — AES-256-GCM, PBKDF2 with 600K iterations
 - **Platform crypto** — Delegates to Web Crypto / Node.js crypto, not pure JS
 - **HMAC argument order** — `hmacSha256(key, data)` not `HmacSHA256(data, key)`
+
+## Browser Compatibility
+
+ironclad requires the [Web Crypto API](https://developer.mozilla.org/en-US/docs/Web/API/Web_Crypto_API) (`crypto.subtle` and `crypto.getRandomValues`), available in all modern environments:
+
+| Environment | Version | Notes |
+|-------------|---------|-------|
+| Chrome / Edge | 37+ | Full support |
+| Firefox | 34+ | Full support |
+| Safari | 10.1+ | Full support |
+| Node.js | 18+ | Uses `crypto.webcrypto` on 18, `globalThis.crypto` on 19+ |
+| Deno | All | Web Crypto built-in |
+| Bun | All | Web Crypto built-in |
+| Cloudflare Workers | All | Web Crypto built-in |
+| Internet Explorer | — | ❌ Not supported |
+
+**Node 18 note:** On Node.js 18, `globalThis.crypto` is not automatically set. ironclad falls back to `require('node:crypto').webcrypto` automatically — no configuration needed.
+
+If `crypto.subtle` is unavailable in your environment, ironclad throws:
+```
+Error: Web Crypto API (crypto.subtle) is not available in this environment
+```
+
+You can check your environment at runtime with the platform detection helpers:
+
+```typescript
+import { isNode, isBrowser, isDeno } from '@agentine/ironclad';
+
+if (!isBrowser() && !isNode()) {
+  console.warn('Unsupported environment');
+}
+```
 
 ## Security
 
